@@ -1,7 +1,15 @@
 import logging
+import os
+import sys
+from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+# Allow running this file directly from the `backend` folder.
+if __package__ in (None, ""):
+    sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from backend.api.v1.router import router as v1_router
 from backend.config import ensure_data_dirs, get_settings
@@ -15,31 +23,43 @@ def _configure_logging() -> None:
     )
 
 
+@asynccontextmanager
+async def _lifespan(_: FastAPI):
+    connect_mongo()
+    try:
+        yield
+    finally:
+        close_mongo()
+
+
 def create_app() -> FastAPI:
     _configure_logging()
     settings = get_settings()
     ensure_data_dirs()
 
-    app = FastAPI(title=settings.app_name)
+    app = FastAPI(title=settings.app_name, lifespan=_lifespan)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+        allow_origins=["http://localhost:8000", "http://127.0.0.1:8000"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
-    @app.on_event("startup")
-    async def _startup() -> None:
-        connect_mongo()
-
-    @app.on_event("shutdown")
-    async def _shutdown() -> None:
-        close_mongo()
 
     app.include_router(v1_router)
     return app
 
 
 app = create_app()
+
+if __name__ == "__main__":
+    import uvicorn
+
+    host = os.getenv("HOST", "127.0.0.1")
+    port = int(os.getenv("PORT", "5000"))
+    # Prefer package-mode startup from project root:
+    #   uvicorn backend.main:app --reload
+    # Keep script-mode fallback for `py .\main.py` inside `backend`.
+    target = "backend.main:app" if __package__ else "main:app"
+    uvicorn.run(target, host=host, port=port, reload=True)
 
