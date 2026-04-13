@@ -1,0 +1,48 @@
+EasyDocs Backend - Dependencies
+Last updated: 2026-03-26
+
+[A] Python packages currently used in code
+1. fastapi
+2. uvicorn
+3. motor
+4. pymongo
+5. python-dotenv
+6. pydantic
+7. requests
+8. numpy
+9. faiss-cpu
+10. PyPDF2
+11. python-docx
+12. python-multipart
+
+[B] Standard library modules used
+- os
+- json
+- re
+- time
+- hashlib
+- logging
+- unicodedata
+- datetime
+- pathlib
+- threading
+- dataclasses
+- typing
+- uuid
+
+[C] External services/infrastructure used by backend
+1. MongoDB (default URI: mongodb://localhost:27017)
+2. FAISS local index file storage (backend/data/faiss/easydocs.index)
+3. Local file storage for uploads (backend/data/uploads/)
+
+[D] AI provider integrations implemented (via HTTP)
+1. Groq (LLM primary)
+2. OpenRouter (LLM fallback)
+3. Gemini (Embeddings primary)
+4. OpenAI (Embeddings fallback)
+5. Local fallback providers (deterministic local embedding + local text fallback)
+
+[E] Optional/planned dependencies from PRD/TRD (not required by current code path)
+1. pytesseract (OCR engine binding)
+2. langdetect
+
