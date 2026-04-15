@@ -11,7 +11,18 @@ type SummaryCardProps = {
   children?: ReactNode;
 };
 
+function extractBulletLines(content: string): string[] {
+  return content
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => /^[-*•]\s+/.test(line))
+    .map((line) => line.replace(/^[-*•]\s+/, "").trim())
+    .filter((line) => line.length > 0);
+}
+
 export function SummaryCard({ title, content, isLoading, children }: SummaryCardProps) {
+  const bulletLines = extractBulletLines(content);
+
   return (
     <motion.section
       initial={{ opacity: 0, y: 20 }}
@@ -51,12 +62,23 @@ export function SummaryCard({ title, content, isLoading, children }: SummaryCard
                className="h-4 w-4/5 rounded-md bg-surface-2" 
             />
           </div>
-        ) : (
-          <motion.p 
+        ) : bulletLines.length > 0 ? (
+          <motion.ul
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
-            className="text-[15px] leading-relaxed text-muted-foreground"
+            className="list-disc space-y-2 pl-5 text-[15px] leading-relaxed text-muted-foreground"
+          >
+            {bulletLines.map((item, index) => (
+              <li key={`${item}-${index}`}>{item}</li>
+            ))}
+          </motion.ul>
+        ) : (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="whitespace-pre-line text-[15px] leading-relaxed text-muted-foreground"
           >
             {content}
           </motion.p>

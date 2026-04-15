@@ -46,6 +46,15 @@ type PrecomputedQA = {
   answer: string;
 };
 
+function toBulletedText(points: string[]): string {
+  return points
+    .map((point) => point.trim())
+    .filter((point) => point.length > 0)
+    .slice(0, 8)
+    .map((point) => `- ${point}`)
+    .join("\n");
+}
+
 function messageReducer(state: Message[], action: ChatAction): Message[] {
   if (action.type === "add") return [...state, action.payload];
   return [];
@@ -95,11 +104,11 @@ export default function ChatPage() {
         if (document.status && document.status !== "completed") {
           throw new Error(`Document not ready (status=${document.status}).`);
         }
-        const keyPointsText = (document.key_points ?? []).slice(0, 4).join(" ");
+        const keyPointsText = toBulletedText(document.key_points ?? []);
         const computedSummary =
-          document.summary_detailed?.trim() ||
-          document.summary?.trim() ||
           keyPointsText ||
+          document.summary?.trim() ||
+          document.summary_detailed?.trim() ||
           "Document loaded. Ask a question in chat to explore details.";
         const sanitizedPrecomputed = (document.precomputed_qa ?? [])
           .map((entry) => ({

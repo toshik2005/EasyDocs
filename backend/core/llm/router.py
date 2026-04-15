@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 import requests
+from requests import exceptions as req_exc
 
 from backend.config import get_settings
 
@@ -31,12 +32,29 @@ _STATE: dict[str, ProviderState] = {
 }
 
 
+def _provider_order() -> list[str]:
+    raw = os.getenv("LLM_PROVIDER_ORDER", "openrouter,groq,local")
+    parts = [p.strip().lower() for p in raw.split(",") if p.strip()]
+    valid = [p for p in parts if p in _STATE]
+    if "local" not in valid:
+        valid.append("local")
+    # Preserve order while removing duplicates.
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for p in valid:
+        if p in seen:
+            continue
+        seen.add(p)
+        ordered.append(p)
+    return ordered
+
+
 def _is_retryable(status_code: Optional[int], exc: Optional[Exception]) -> bool:
-    if exc is not None:
-        return True
     if status_code in (408, 409, 425, 429, 500, 502, 503, 504):
         return True
-    return False
+    if exc is None:
+        return False
+    return isinstance(exc, (req_exc.Timeout, req_exc.ConnectionError, req_exc.RequestException))
 
 
 def _backoff_sleep(attempt: int) -> None:
@@ -49,7 +67,7 @@ def _note_failure(provider: str) -> None:
     st.failures += 1
     if st.failures >= 5:
         st.disabled_until_ts = time.time() + 120.0
-        logger.warning("LLM provider disabled (circuit breaker)", extra={"provider": provider})
+        logger.info("LLM provider disabled (circuit breaker)", extra={"provider": provider})
 
 
 def _note_success(provider: str) -> None:
@@ -60,6 +78,15 @@ def _note_success(provider: str) -> None:
 
 def _provider_available(provider: str) -> bool:
     return time.time() >= _STATE[provider].disabled_until_ts
+
+
+def _provider_configured(provider: str) -> bool:
+    settings = get_settings()
+    if provider == "groq":
+        return bool(settings.groq_api_key)
+    if provider == "openrouter":
+        return bool(settings.openrouter_api_key)
+    return True
 
 
 def _call_groq(prompt: str) -> str:
@@ -129,10 +156,12 @@ def generate_text(prompt: str) -> tuple[str, str]:
       3) Local
     Retries with exponential backoff and basic circuit breaker.
     """
-    providers = ["groq", "openrouter", "local"]
+    providers = _provider_order()
     last_err: Optional[Exception] = None
 
     for provider in providers:
+        if not _provider_configured(provider):
+            continue
         if not _provider_available(provider):
             continue
 
@@ -155,13 +184,16 @@ def generate_text(prompt: str) -> tuple[str, str]:
                 status_code = getattr(getattr(e, "response", None), "status_code", None)
                 retryable = _is_retryable(status_code, e)
                 _note_failure(provider)
-                logger.warning(
-                    "LLM provider call failed",
-                    extra={"provider": provider, "attempt": attempt, "retryable": retryable, "err": str(e)[:300]},
-                )
+                # Avoid noisy warnings for expected fallback behavior.
+                if not retryable or attempt >= 3:
+                    logger.info(
+                        "LLM provider call failed; trying fallback provider",
+                        extra={"provider": provider, "attempt": attempt, "retryable": retryable, "err": str(e)[:300]},
+                    )
                 if not retryable:
                     break
                 _backoff_sleep(attempt)
 
+    logger.warning("All LLM providers failed", extra={"err": str(last_err)[:300] if last_err else "unknown"})
     raise LLMError(f"All LLM providers failed: {last_err}")
 

@@ -19,7 +19,8 @@ def _reduce_prompt(summaries: list[str]) -> str:
     joined = "\n\n".join(f"- {s.strip()}" for s in summaries if s and s.strip())
     return (
         "You are combining partial summaries into one final summary. "
-        "Produce a concise executive summary and a short list of key points.\n\n"
+        "Return ONLY concise bullet points (6-10 bullets). "
+        "Each line must start with '- '.\n\n"
         f"PARTIAL SUMMARIES:\n{joined}"
     )
 
