@@ -1,63 +1,89 @@
 "use client";
 
-import { useReducer, useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { ChatDrawer, Message } from "@/components/ChatDrawer";
+import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { SummaryCard } from "@/components/SummaryCard";
 import { UploadBox } from "@/components/UploadBox";
 
-type ChatAction = { type: "add"; payload: Message } | { type: "reset" };
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://127.0.0.1:5000";
+const API_BASE = `${BACKEND_URL}/api/v1`;
+const POLL_INTERVAL_MS = 1500;
+const MAX_POLL_ATTEMPTS = 20;
 
-const mockSummary =
-  "This document outlines key ideas, major takeaways, and practical action items. It highlights the most relevant points in a concise structure so readers can quickly understand the content and apply it.";
+type UploadResponse = {
+  job_id: string;
+  doc_id: string;
+  status: string;
+};
 
-function messageReducer(state: Message[], action: ChatAction): Message[] {
-  if (action.type === "add") return [...state, action.payload];
-  return [];
+type JobStatusResponse = {
+  status: string;
+};
+
+async function readErrorDetail(response: Response): Promise<string> {
+  try {
+    const data = await response.json();
+    if (typeof data?.detail === "string") return data.detail;
+  } catch {
+    // Ignore parsing errors and fall back to status text.
+  }
+  return response.statusText || "Request failed";
 }
 
-const nextMessage = (role: "user" | "assistant", text: string): Message => ({
-  id: `${role}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-  role,
-  text,
-});
-
 export default function Home() {
+  const router = useRouter();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [summary, setSummary] = useState("");
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [messages, dispatchMessages] = useReducer(messageReducer, []);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const handleFileUpload = async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const uploadResponse = await fetch(`${API_BASE}/upload`, {
+      method: "POST",
+      body: formData,
+    });
+    if (!uploadResponse.ok) {
+      throw new Error(await readErrorDetail(uploadResponse));
+    }
+    const upload = (await uploadResponse.json()) as UploadResponse;
+
+    let currentStatus = upload.status;
+    let attempts = 0;
+    while (attempts < MAX_POLL_ATTEMPTS && currentStatus !== "completed" && currentStatus !== "failed") {
+      attempts += 1;
+      await new Promise((resolve) => window.setTimeout(resolve, POLL_INTERVAL_MS));
+      const statusResponse = await fetch(`${API_BASE}/jobs/${upload.job_id}/status`);
+      if (!statusResponse.ok) {
+        throw new Error(await readErrorDetail(statusResponse));
+      }
+      const statusPayload = (await statusResponse.json()) as JobStatusResponse;
+      currentStatus = statusPayload.status;
+    }
+
+    if (currentStatus !== "completed") {
+      throw new Error(`Processing did not complete (status: ${currentStatus}).`);
+    }
+    router.push(`/chat/${encodeURIComponent(upload.doc_id)}?name=${encodeURIComponent(file.name)}`);
+  };
 
   const handleFileSelect = (file: File) => {
     setSelectedFile(file);
     setIsUploading(true);
     setSummary("");
-    dispatchMessages({ type: "reset" });
-
-    window.setTimeout(() => {
-      setSummary(mockSummary);
-      setIsUploading(false);
-      dispatchMessages({
-        type: "add",
-        payload: nextMessage("assistant", `File "${file.name}" uploaded. Ask me anything about it.`),
+    setErrorMessage("");
+    void handleFileUpload(file)
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : "Upload failed";
+        setErrorMessage(message);
+      })
+      .finally(() => {
+        setIsUploading(false);
       });
-      setIsDrawerOpen(true); // Automatically open chat when done
-    }, 2000);
-  };
-
-  const handleSendMessage = (input: string) => {
-    dispatchMessages({ type: "add", payload: nextMessage("user", input) });
-    window.setTimeout(() => {
-      dispatchMessages({
-        type: "add",
-        payload: nextMessage(
-          "assistant",
-          "Thanks for the question. This is a placeholder AI response wired to the current chat UI."
-        ),
-      });
-    }, 800);
   };
 
   return (
@@ -90,7 +116,7 @@ export default function Home() {
             Understand documents in seconds.
           </h1>
           <p className="mx-auto whitespace-nowrap text-sm text-muted-foreground sm:text-base">
-            Drop your PDF or text file below and let our intelligent engine extract, summarize, and answer your questions instantly.
+            Drop your PDF or DOCX file below and let our intelligent engine extract, summarize, and answer your questions instantly.
           </p>
         </motion.div>
 
@@ -98,33 +124,23 @@ export default function Home() {
           
           <UploadBox onFileSelect={handleFileSelect} selectedFile={selectedFile} isUploading={isUploading} />
 
-          {selectedFile ? (
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-6 mx-auto flex w-full max-w-2xl items-center justify-between rounded-2xl border border-brand-500/35 bg-surface p-4 text-sm text-brand-600 shadow-[0_8px_24px_rgba(59,130,246,0.15)]"
-            >
-              <div className="flex items-center gap-3">
-                <div className="h-2 w-2 rounded-full bg-brand-500 animate-pulse" />
-                <span className="font-semibold text-foreground">Active Document:</span> {selectedFile.name}
-              </div>
-            </motion.div>
-          ) : null}
-
-          {(selectedFile || isUploading) && (
+          {(selectedFile || isUploading || errorMessage) && (
             <div className="mx-auto w-full max-w-2xl">
-              <SummaryCard title="Executive Summary" content={summary || mockSummary} isLoading={isUploading} />
+              <SummaryCard
+                title="Upload Status"
+                content={
+                  errorMessage
+                    ? errorMessage
+                    : isUploading
+                    ? "We are extracting and indexing your document. You will be redirected to chat when ready."
+                    : summary || "Select a document to get started."
+                }
+                isLoading={isUploading}
+              />
             </div>
           )}
         </section>
       </main>
-
-      <ChatDrawer
-        isOpen={isDrawerOpen}
-        onToggle={() => setIsDrawerOpen((prev) => !prev)}
-        messages={messages}
-        onSendMessage={handleSendMessage}
-      />
     </div>
   );
 }

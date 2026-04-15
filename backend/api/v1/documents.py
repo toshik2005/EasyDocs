@@ -6,6 +6,13 @@ from backend.models.document import DocumentInDB
 
 router = APIRouter()
 
+@router.get("/docs", response_model=list[DocumentInDB])
+async def list_documents(db: AsyncIOMotorDatabase = Depends(db_dep)):
+    cols = Collections()
+    cursor = db[cols.documents].find().sort("created_at", -1)
+    documents = await cursor.to_list(length=200)
+    return [DocumentInDB(**doc) for doc in documents]
+
 @router.get("/docs/{doc_id}", response_model=DocumentInDB)
 async def get_document(doc_id: str, db: AsyncIOMotorDatabase = Depends(db_dep)):
     cols = Collections()

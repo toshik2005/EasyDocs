@@ -1,5 +1,6 @@
 "use client";
 
+import { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 
@@ -7,9 +8,10 @@ type SummaryCardProps = {
   title: string;
   content: string;
   isLoading: boolean;
+  children?: ReactNode;
 };
 
-export function SummaryCard({ title, content, isLoading }: SummaryCardProps) {
+export function SummaryCard({ title, content, isLoading, children }: SummaryCardProps) {
   return (
     <motion.section
       initial={{ opacity: 0, y: 20 }}
@@ -60,6 +62,7 @@ export function SummaryCard({ title, content, isLoading }: SummaryCardProps) {
           </motion.p>
         )}
       </div>
+      {!isLoading && children ? <div className="relative mt-6">{children}</div> : null}
     </motion.section>
   );
 }

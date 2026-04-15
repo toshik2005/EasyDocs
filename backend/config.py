@@ -1,5 +1,5 @@
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -47,6 +47,7 @@ class Settings:
     openrouter_api_key: str | None = None
 
     request_timeout_s: int = 30
+    cors_origins: list[str] = field(default_factory=list)
 
 
 def get_settings() -> Settings:
@@ -61,6 +62,20 @@ def get_settings() -> Settings:
         except ValueError:
             return default
 
+    def _get_list(name: str, default: list[str]) -> list[str]:
+        val = os.getenv(name)
+        if not val:
+            return default
+        items = [part.strip() for part in val.split(",")]
+        return [item for item in items if item]
+
+    default_cors_origins = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ]
+
     return Settings(
         app_name=os.getenv("APP_NAME", "EasyDocs"),
         env=os.getenv("ENV", "dev"),
@@ -74,6 +89,7 @@ def get_settings() -> Settings:
         groq_api_key=_env_secret("GROQ_API_KEY"),
         openrouter_api_key=_env_secret("OPENROUTER_API_KEY"),
         request_timeout_s=_get_int("REQUEST_TIMEOUT_S", 30),
+        cors_origins=_get_list("CORS_ORIGINS", default_cors_origins),
     )
 
 

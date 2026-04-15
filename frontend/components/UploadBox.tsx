@@ -2,7 +2,7 @@
 
 import { ChangeEvent, DragEvent, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { UploadCloud, File as FileIcon, CheckCircle2 } from "lucide-react";
+import { UploadCloud, CheckCircle2 } from "lucide-react";
 
 type UploadBoxProps = {
   onFileSelect: (file: File) => void;
@@ -10,7 +10,8 @@ type UploadBoxProps = {
   isUploading: boolean;
 };
 
-const ACCEPTED_TYPES = ".pdf,.txt,application/pdf,text/plain";
+const ACCEPTED_TYPES =
+  ".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 const dashArray = "0 10";
 
@@ -20,8 +21,11 @@ export function UploadBox({ onFileSelect, selectedFile, isUploading }: UploadBox
 
   const handleFile = (file?: File) => {
     if (!file) return;
-    const validType = file.type === "application/pdf" || file.type === "text/plain";
-    const validExtension = file.name.endsWith(".pdf") || file.name.endsWith(".txt");
+    const validType =
+      file.type === "application/pdf" ||
+      file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    const lowerName = file.name.toLowerCase();
+    const validExtension = lowerName.endsWith(".pdf") || lowerName.endsWith(".docx");
     if (!validType && !validExtension) return;
     onFileSelect(file);
   };
@@ -88,7 +92,7 @@ export function UploadBox({ onFileSelect, selectedFile, isUploading }: UploadBox
             accept={ACCEPTED_TYPES}
             onChange={onInputChange}
             className="hidden"
-            aria-label="Upload PDF or text file"
+            aria-label="Upload PDF or DOCX file"
           />
 
           <AnimatePresence mode="wait">
@@ -112,7 +116,7 @@ export function UploadBox({ onFileSelect, selectedFile, isUploading }: UploadBox
                   )}
                 </div>
                 <h2 className="mb-2 text-2xl font-bold tracking-tight text-foreground">Drop your magic here</h2>
-                <p className="text-sm font-medium text-muted-foreground">Supports PDF and TXT files</p>
+                <p className="text-sm font-medium text-muted-foreground">Supports PDF and DOCX files</p>
                 <motion.button
                   type="button"
                   whileHover={{ scale: 1.05 }}

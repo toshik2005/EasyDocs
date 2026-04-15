@@ -3,16 +3,19 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { FileText, Home, Moon, Settings, Sun } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const navLinks = [
-  { name: "Home", icon: Home },
-  { name: "Documents", icon: FileText },
-  { name: "Settings", icon: Settings },
+  { name: "Home", href: "/", icon: Home },
+  { name: "Documents", href: "/documents", icon: FileText },
+  { name: "Settings", href: "#", icon: Settings },
 ];
 
 export function Navbar() {
   const [isDark, setIsDark] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem("theme");
@@ -42,26 +45,34 @@ export function Navbar() {
         className="flex h-16 w-full items-center justify-between px-6"
         aria-label="Main navigation"
       >
-        <div className="flex items-center gap-3 cursor-pointer group">
+        <Link href="/" className="flex items-center gap-3 cursor-pointer group">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600 text-sm font-bold text-white shadow-md shadow-brand-500/25 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
             ED
           </div>
           <span className="text-xl font-bold tracking-tight text-foreground">
             EasyDocs
           </span>
-        </div>
+        </Link>
 
         <ul className="hidden items-center gap-1 md:flex">
           {navLinks.map((link) => (
             <li key={link.name}>
-              <motion.button
+              <motion.div
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.95 }}
-                className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
               >
-                <link.icon className="h-4 w-4" />
-                {link.name}
-              </motion.button>
+                <Link
+                  href={link.href}
+                  className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                    pathname === link.href
+                      ? "bg-surface-2 text-foreground"
+                      : "text-muted-foreground hover:bg-surface-2 hover:text-foreground"
+                  }`}
+                >
+                  <link.icon className="h-4 w-4" />
+                  {link.name}
+                </Link>
+              </motion.div>
             </li>
           ))}
         </ul>
