@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { SummaryCard } from "@/components/SummaryCard";
@@ -87,58 +87,64 @@ export default function Home() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden selection:bg-brand-500/30 selection:text-white bg-background text-foreground">
-      {/* Background ambient orbs */}
-      <div className="absolute top-[-10%] left-[-10%] h-[40%] w-[40%] pointer-events-none rounded-full bg-brand-500/15 blur-[120px]" />
-      <div className="absolute bottom-[-10%] right-[-10%] h-[40%] w-[40%] pointer-events-none rounded-full bg-accent-500/12 blur-[120px]" />
-
+    <div className="relative min-h-screen bg-background text-foreground selection:bg-brand-500/30 font-sans">
       <Navbar />
 
-      <main className="relative z-10 mx-auto flex w-full max-w-5xl flex-col px-4 pb-20 pt-8 sm:px-6 lg:px-8">
+      <main className="relative z-10 mx-auto flex w-full max-w-4xl flex-col items-center px-4 pb-24 pt-12 sm:px-6 lg:px-8">
         
         {/* Animated Header */}
         <motion.div 
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="text-center mb-16"
+          transition={{ duration: 0.7, ease: "easeOut" }}
+          className="text-center mb-12 sm:mb-16 w-full"
         >
           <motion.div
-             initial={{ scale: 0.9, opacity: 0 }}
+             initial={{ scale: 0.95, opacity: 0 }}
              animate={{ scale: 1, opacity: 1 }}
-             transition={{ delay: 0.2, duration: 0.5 }}
-             className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-sm font-medium text-brand-500 shadow-sm"
+             transition={{ delay: 0.1, duration: 0.4 }}
+             className="mx-auto mb-6 inline-flex w-fit items-center gap-2.5 rounded-full border border-border/80 bg-surface/50 px-3.5 py-1.5 text-xs font-semibold text-foreground backdrop-blur-md"
           >
-             <span className="flex h-2 w-2 rounded-full bg-brand-500 animate-pulse"></span>
-             AI-Powered Document Analysis
+             <span className="relative flex h-2 w-2 items-center justify-center">
+               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-500 opacity-75"></span>
+               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-brand-500"></span>
+             </span>
+             Powered by Advanced AI
           </motion.div>
-          <h1 className="mb-4 whitespace-nowrap text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            Understand documents in seconds.
+          <h1 className="mb-5 text-4xl font-black tracking-tight text-foreground sm:text-5xl md:text-6xl max-w-3xl mx-auto leading-tight">
+            Knowledge unlocked <br className="hidden sm:block" /> in seconds.
           </h1>
-          <p className="mx-auto whitespace-nowrap text-sm text-muted-foreground sm:text-base">
-            Drop your PDF or DOCX file below and let our intelligent engine extract, summarize, and answer your questions instantly.
+          <p className="mx-auto max-w-xl text-base text-muted-foreground sm:text-lg">
+            Upload your PDF or Word document and let our intelligent engine effortlessly summarize and answer all your questions.
           </p>
         </motion.div>
 
-        <section className="flex flex-col flex-1 justify-center relative">
-          
+        <section className="w-full flex-1 relative flex flex-col items-center">
           <UploadBox onFileSelect={handleFileSelect} selectedFile={selectedFile} isUploading={isUploading} />
 
-          {(selectedFile || isUploading || errorMessage) && (
-            <div className="mx-auto w-full max-w-2xl">
-              <SummaryCard
-                title="Upload Status"
-                content={
-                  errorMessage
-                    ? errorMessage
-                    : isUploading
-                    ? "We are extracting and indexing your document. You will be redirected to chat when ready."
-                    : summary || "Select a document to get started."
-                }
-                isLoading={isUploading}
-              />
-            </div>
-          )}
+          <AnimatePresence>
+            {(selectedFile || isUploading || errorMessage) && (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                className="mt-8 w-full max-w-2xl"
+              >
+                <SummaryCard
+                  title={errorMessage ? "Error" : isUploading ? "Analyzing Document" : "Processing Complete"}
+                  content={
+                    errorMessage
+                      ? errorMessage
+                      : isUploading
+                      ? "We are parsing and indexing your document's contents. You will be automatically redirected to chat shortly."
+                      : summary || "Redirecting..."
+                  }
+                  isLoading={isUploading}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </section>
       </main>
     </div>

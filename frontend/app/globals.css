@@ -44,7 +44,7 @@
   --color-surface-2: var(--surface-2);
   --color-border: var(--border);
   --color-ring: var(--ring);
-  --font-sans: "Inter", "Outfit", system-ui, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 }
 
 body {

@@ -54,34 +54,34 @@ export function ChatDrawer({
     <Drawer open={isOpen} onOpenChange={onOpenChange}>
       <DrawerTrigger asChild>
         <Button
-          className="fixed bottom-6 right-6 z-50 h-12 w-12 rounded-full p-0 shadow-[0_0_20px_rgba(37,99,235,0.35)]"
+          className="fixed bottom-6 right-6 z-50 h-[3.25rem] w-[3.25rem] rounded-full p-0 shadow-lg shadow-black/5 bg-foreground text-background hover:bg-foreground/90 transition-transform active:scale-95"
           aria-label="Open AI Assistant"
         >
-          <MessageSquare className="h-5 w-5" />
+          <MessageSquare className="h-[1.3rem] w-[1.3rem]" />
           {messages.length > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-surface bg-accent-500 text-[10px] font-bold text-white shadow-sm">
+            <span className="absolute -top-1 -right-1 flex h-[1.125rem] w-[1.125rem] items-center justify-center rounded-full border-2 border-background bg-brand-500 text-[9px] font-bold text-white shadow-sm">
               {messages.length}
             </span>
           )}
         </Button>
       </DrawerTrigger>
-      <DrawerContent className="data-[vaul-drawer-direction=bottom]:max-h-[70vh]">
-        <DrawerHeader className="border-b border-border pb-3">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500/20 text-brand-500">
+      <DrawerContent className="h-[90vh] max-h-[90vh] flex flex-col md:h-[85vh]">
+        <DrawerHeader className="border-b border-border/50 pb-3 flex-shrink-0">
+          <div className="flex items-center gap-3 px-1">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-2 text-foreground">
               <Sparkles className="h-4 w-4" />
             </div>
             <div>
-              <DrawerTitle>AI Assistant</DrawerTitle>
-              <DrawerDescription>Ask about this document and use suggested prompts.</DrawerDescription>
+              <DrawerTitle className="text-sm">AI Assistant</DrawerTitle>
+              <DrawerDescription className="text-xs">Ask questions about this document.</DrawerDescription>
             </div>
           </div>
         </DrawerHeader>
 
-        <div id="chat-scroll" className="no-scrollbar flex-1 space-y-3 overflow-y-auto px-4 py-3">
+        <div id="chat-scroll" className="no-scrollbar flex-1 space-y-4 overflow-y-auto px-5 py-4">
           {suggestedQuestions.length > 0 ? (
-            <div className="rounded-xl border border-border bg-surface-2 p-3">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <div className="rounded-xl border border-border/50 bg-surface/30 p-3">
+              <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Suggested Questions
               </p>
               <div className="flex flex-wrap gap-2">
@@ -90,7 +90,7 @@ export function ChatDrawer({
                     key={`${question}-${index}`}
                     type="button"
                     onClick={() => onSuggestedQuestionClick?.(question)}
-                    className="rounded-full border border-brand-500/30 bg-brand-500/10 px-3 py-1.5 text-xs font-medium text-brand-600 transition-colors hover:bg-brand-500/20"
+                    className="rounded-full border border-border/60 bg-surface px-3 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-surface-2"
                   >
                     {question}
                   </button>
@@ -100,10 +100,10 @@ export function ChatDrawer({
           ) : null}
 
           {messages.length === 0 ? (
-            <div className="flex h-full min-h-28 flex-col items-center justify-center text-center opacity-80">
-              <MessageSquare className="mb-3 h-10 w-10 text-muted-foreground" />
+            <div className="flex h-full min-h-28 flex-col items-center justify-center text-center opacity-70">
+              <MessageSquare className="mb-3 h-8 w-8 text-muted-foreground stroke-1" />
               <p className="text-xs text-muted-foreground">
-                Upload a document and start uncovering insights!
+                No messages yet.
               </p>
             </div>
           ) : (
@@ -113,13 +113,10 @@ export function ChatDrawer({
           )}
         </div>
 
-        <DrawerFooter className="border-t border-border">
+        <DrawerFooter className="border-t border-border/50 bg-background pt-3">
           <div className="w-full">
             <ChatInput onSend={onSendMessage} />
           </div>
-          <DrawerClose asChild>
-            <Button variant="outline">Close</Button>
-          </DrawerClose>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>

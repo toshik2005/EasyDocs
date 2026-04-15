@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { FileText, Loader2, MessageSquare, RefreshCw } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { FileText, Loader2, MessageSquare, RefreshCw, ChevronRight, Clock } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://127.0.0.1:5000";
@@ -22,13 +22,18 @@ function formatDate(value?: string): string {
   if (!value) return "Unknown date";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Unknown date";
-  return date.toLocaleString();
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
 }
 
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [hoveredDoc, setHoveredDoc] = useState<string | null>(null);
 
   const loadDocuments = async () => {
     setIsLoading(true);
@@ -57,102 +62,139 @@ export default function DocumentsPage() {
   );
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
+    <div className="relative min-h-screen bg-background text-foreground selection:bg-brand-500/30">
       <Navbar />
-      <main className="relative z-10 mx-auto w-full max-w-5xl px-4 pb-12 pt-4 sm:px-6 lg:px-8">
-        <motion.section
+      <main className="relative z-10 mx-auto w-full max-w-4xl px-4 pb-20 pt-8 sm:px-6 lg:px-8">
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 rounded-2xl border border-border bg-surface p-5"
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="mb-10 flex items-end justify-between border-b border-border/50 pb-6"
         >
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">Documents</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {documents.length} total documents, {completedCount} ready for chat.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                void loadDocuments();
-              }}
-              className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm font-medium text-foreground hover:bg-surface"
-            >
-              <RefreshCw className="h-4 w-4" />
-              Refresh
-            </button>
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">Library</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {documents.length} documents indexed &middot; {completedCount} ready for chat
+            </p>
           </div>
-        </motion.section>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => void loadDocuments()}
+            className="group flex items-center gap-2 rounded-full bg-surface-2 px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface hover:shadow-sm"
+          >
+            <RefreshCw className="h-4 w-4 text-muted-foreground transition-transform duration-500 group-hover:rotate-180 group-hover:text-foreground" />
+            Refresh
+          </motion.button>
+        </motion.div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center rounded-2xl border border-border bg-surface p-10 text-muted-foreground">
-            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-            Loading document history...
+          <div className="flex h-64 flex-col items-center justify-center space-y-4">
+            <Loader2 className="h-6 w-6 animate-spin text-brand-500" />
+            <p className="text-sm font-medium text-muted-foreground">Syncing documents...</p>
           </div>
         ) : error ? (
-          <div className="rounded-2xl border border-red-400/40 bg-red-500/10 p-4 text-sm text-red-500">
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            className="rounded-2xl border border-red-500/20 bg-red-500/5 p-6 text-center text-sm font-medium text-red-500"
+          >
             {error}
-          </div>
+          </motion.div>
         ) : documents.length === 0 ? (
-          <div className="rounded-2xl border border-border bg-surface p-8 text-center">
-            <FileText className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">No documents uploaded yet.</p>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+            className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border/60 p-16 text-center"
+          >
+            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-surface-2 ring-1 ring-border/50">
+               <FileText className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="mb-2 text-lg font-semibold text-foreground">Your library is empty</h3>
+            <p className="mb-6 max-w-sm text-sm text-muted-foreground">
+              Upload a document to start extracting intelligence and asking questions.
+            </p>
             <Link
               href="/"
-              className="mt-4 inline-flex rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white"
+              className="inline-flex rounded-full bg-foreground px-6 py-2.5 text-sm font-medium text-background transition-transform hover:scale-105 active:scale-95"
             >
-              Upload your first document
+              Upload Document
             </Link>
-          </div>
+          </motion.div>
         ) : (
-          <div className="space-y-3">
-            {documents.map((doc) => (
-              <motion.article
-                key={doc.doc_id}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="rounded-2xl border border-border bg-surface p-4"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h2 className="truncate text-base font-semibold text-foreground">{doc.file_name}</h2>
-                    <p className="mt-1 text-xs text-muted-foreground">Uploaded: {formatDate(doc.created_at)}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">Last update: {formatDate(doc.updated_at)}</p>
+          <div className="space-y-2">
+            <AnimatePresence>
+              {documents.map((doc, i) => (
+                <motion.div
+                  key={doc.doc_id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05, duration: 0.4 }}
+                  onHoverStart={() => setHoveredDoc(doc.doc_id)}
+                  onHoverEnd={() => setHoveredDoc(null)}
+                  className="group relative flex items-center justify-between overflow-hidden rounded-2xl border border-transparent bg-transparent px-4 py-4 transition-all hover:border-border/60 hover:bg-surface hover:shadow-sm sm:px-6"
+                >
+                  <div className="flex min-w-0 flex-1 items-center gap-4">
+                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors ${
+                      doc.status === "completed" ? "bg-brand-500/10 text-brand-500" :
+                      doc.status === "failed" ? "bg-red-500/10 text-red-500" :
+                      "bg-amber-500/10 text-amber-500"
+                    }`}>
+                      {doc.status === "completed" ? <FileText className="h-4 w-4" /> :
+                       doc.status === "failed" ? <FileText className="h-4 w-4 opacity-50" /> :
+                       <RefreshCw className="h-4 w-4 animate-spin" />}
+                    </div>
+                    
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-3">
+                        <Link 
+                           href={`/chat/${encodeURIComponent(doc.doc_id)}?name=${encodeURIComponent(doc.file_name)}`}
+                           className="truncate text-base font-medium text-foreground hover:text-brand-600 transition-colors"
+                        >
+                           {doc.file_name}
+                        </Link>
+                        {doc.status !== "completed" && (
+                          <span className={`shrink-0 rounded-full py-0.5 px-2 text-[10px] font-medium uppercase tracking-wider ${
+                            doc.status === "failed" ? "bg-red-500/10 text-red-500" : "bg-amber-500/10 text-amber-500"
+                          }`}>
+                            {doc.status}
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-1 flex items-center gap-4 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1.5 hover:text-foreground transition-colors">
+                           <Clock className="h-3 w-3" />
+                           {formatDate(doc.created_at)}
+                        </span>
+                        {doc.summary && (
+                          <span className="truncate max-w-[200px] sm:max-w-xs md:max-w-md hidden sm:inline-block border-l border-border/50 pl-4">
+                            {doc.summary}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                      doc.status === "completed"
-                        ? "bg-emerald-500/15 text-emerald-500"
-                        : doc.status === "failed"
-                        ? "bg-red-500/15 text-red-500"
-                        : "bg-amber-500/15 text-amber-500"
-                    }`}
-                  >
-                    {doc.status}
-                  </span>
-                </div>
-                <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">
-                  {doc.summary?.trim() || "No summary generated yet."}
-                </p>
-                <div className="mt-4 flex items-center gap-2">
-                  <Link
-                    href={`/chat/${encodeURIComponent(doc.doc_id)}?name=${encodeURIComponent(doc.file_name)}`}
-                    className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface-2 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface"
-                  >
-                    <FileText className="h-3.5 w-3.5" />
-                    View
-                  </Link>
-                  <Link
-                    href={`/chat/${encodeURIComponent(doc.doc_id)}?name=${encodeURIComponent(doc.file_name)}`}
-                    className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white"
-                  >
-                    <MessageSquare className="h-3.5 w-3.5" />
-                    Chat
-                  </Link>
-                </div>
-              </motion.article>
-            ))}
+
+                  <AnimatePresence>
+                    {(hoveredDoc === doc.doc_id || window.innerWidth < 768) && doc.status === "completed" && (
+                      <motion.div
+                        initial={{ opacity: 0, x: 10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 10 }}
+                        className="ml-4 shrink-0 flex items-center gap-2"
+                      >
+                        <Link
+                          href={`/chat/${encodeURIComponent(doc.doc_id)}?name=${encodeURIComponent(doc.file_name)}`}
+                          className="flex items-center justify-center gap-2 rounded-full border border-border/60 bg-surface px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-brand-500/40 hover:bg-brand-500/5 hover:text-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                          <span className="hidden sm:inline">Chat</span>
+                          <ChevronRight className="h-4 w-4 sm:hidden" />
+                        </Link>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         )}
       </main>
