@@ -65,7 +65,7 @@ export function ChatDrawer({
           )}
         </Button>
       </DrawerTrigger>
-      <DrawerContent className="h-[90vh] max-h-[90vh] flex flex-col md:h-[85vh]">
+      <DrawerContent className="inset-[1cm] h-auto max-h-none w-auto max-w-none flex-col rounded-2xl border border-border bg-background shadow-2xl data-open:slide-in-from-bottom-0 data-closed:slide-out-to-bottom-0">
         <DrawerHeader className="border-b border-border/50 pb-3 flex-shrink-0">
           <div className="flex items-center gap-3 px-1">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-2 text-foreground">
