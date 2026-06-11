@@ -1,0 +1,186 @@
+Minor Project Presentation
+On 
+
+“<Name of Minor Project>”
+
+
+
+
+
+
+
+Presented By:-
+Mahesh Kumar Joshi
+24BCON123
+
+2025-2026
+
+
+
+Guide:-
+Dr./Mr./ Ms. XYZAssistant Professor
+
+DEPARTMENT OF  
+Computer Science and Engineering
+
+
+Contents
+Introduction & Problem Statement (Background, motivation, and the core problem being addressed)
+
+Literature Review (if any) or System Design (Block diagrams, flowcharts, SRS, UML Diagrams, DFD, ER Diagrams etc. )
+
+Methodology (Approach, architecture, algorithms or processes used)
+
+Tools and Technology Used (Hardware components, software, programming languages, frameworks, libraries)
+
+Roles and Responsibilities of each Member
+
+Implementation (Step-by-step development, modules built, code snippets etc.)
+
+ Results (Screenshots, graphs, test data, observations, and performance metrics etc.)
+
+Conclusion & Future Scope (Summary of achievements, limitations, and possible future enhancements)
+
+References (Books, research papers, websites cited in IEEE or APA format)
+Introduction
+AI-powered document intelligence platform
+Supports PDF and DOCX document analysis
+Provides summaries and AI-based chat
+Uses Retrieval-Augmented Generation (RAG)
+Built with scalable production architecture
+Problem Statement
+Manual document reading is time-consuming
+AI tools often hallucinate information
+Lack of source citations reduces trust
+Scanned PDFs are difficult to process
+Single-provider AI dependency causes downtime
+Objectives
+Generate accurate document summaries
+Provide source-cited AI answers
+Support OCR for scanned PDFs
+Build scalable async processing pipeline
+Implement multi-LLM failover architecture
+Literature Review
+Studied ChatPDF and Humata AI
+Analyzed NotebookLM and Adobe AI
+Researched RAG architecture
+Studied FAISS vector search
+Identified limitations in existing systems
+System Architecture
+Frontend: Next.js 14 + Tailwind CSS
+Backend: FastAPI + Uvicorn
+Database: MongoDB
+Queue System: Celery + Redis
+Vector Storage: FAISS
+Frontend Layer
+Responsive UI using Tailwind CSS
+State management using Zustand
+Dashboard for uploaded documents
+Real-time updates using SSE
+AI chat interface with citations
+Backend Layer
+REST APIs built using FastAPI
+JWT-based authentication system
+File upload and validation APIs
+Chat and summarization endpoints
+Middleware for security and error handling
+Document Processing Pipeline
+File Upload and Validation
+Text Parsing
+OCR Fallback
+Smart Chunking
+Embedding Generation
+Summarization and RAG Chat
+OCR & Parsing Module
+PyMuPDF for PDF extraction
+python-docx for DOCX parsing
+Tesseract OCR for scanned PDFs
+Automatic OCR quality detection
+Text cleaning and normalization
+Smart Chunking Algorithm
+Paragraph-aware chunk splitting
+400–600 token chunk size
+100-token overlap preservation
+Page number tracking
+Improves retrieval accuracy
+Embedding & FAISS
+Gemini embeddings as primary provider
+OpenAI and HuggingFace as failovers
+Vectors stored in FAISS
+Top-K semantic retrieval
+Cosine similarity search
+RAG Chat Engine
+User submits question
+Question converted into embeddings
+FAISS retrieves relevant chunks
+LLM generates grounded answers
+Page citations displayed to user
+Multi-LLM Failover
+Primary Provider: Groq
+Fallback Provider: OpenRouter
+Offline Fallback: Ollama
+Circuit breaker implementation
+Exponential backoff retry logic
+Database Design
+MongoDB stores metadata and chat history
+Documents collection
+Chunks collection
+Chat history collection
+FAISS mapping references
+Security Features
+JWT authentication
+MIME-type validation
+SHA-256 duplicate detection
+Prompt injection sanitization
+Filename sanitization
+Tools & Technologies
+Frontend: Next.js, Tailwind CSS
+Backend: FastAPI
+Database: MongoDB
+Queue: Celery + Redis
+AI: Groq, Gemini, Ollama
+Implementation Modules
+Upload & Validation Module
+Parsing & OCR Module
+Chunking Module
+Embedding Module
+Summarization Module
+RAG Chat Module
+Testing & Results
+100 concurrent users tested
+Average chat latency: 1.8 sec
+20-page PDF processed in 38 sec
+99.8% uptime achieved
+All functional tests passed
+Achievements
+Built production-style AI platform
+Implemented scalable RAG system
+Designed failover architecture
+Integrated OCR support
+Developed async processing pipeline
+Limitations
+OCR depends on scan quality
+English-only support
+FAISS memory limitations
+Ollama requires strong hardware
+Technical documents may require fine-tuned models
+Future Scope
+Multi-document chat
+PDF/DOCX summary export
+Mobile application
+Team collaboration workspaces
+Multilingual support
+Conclusion
+EasyDocs solves document comprehension challenges
+Combines AI, RAG, OCR, and vector search
+Provides reliable source-cited answers
+Demonstrates scalable architecture
+Suitable for academic and enterprise use
+References
+Lewis et al. – RAG Research Paper
+Johnson et al. – FAISS
+FastAPI Documentation
+MongoDB Documentation
+Next.js Documentation
+Thank You
+Questions & Answers
